@@ -47,6 +47,8 @@ type Client interface {
 		db.ContainerMetadata,
 		ImageFetcherSpec,
 		runtime.ProcessSpec,
+		runtime.TaskStartingEventDelegate,
+		atc.TaskConfig,
 		lock.LockFactory,
 	) TaskResult
 
@@ -170,6 +172,8 @@ func (client *client) RunTaskStep(
 	metadata db.ContainerMetadata,
 	imageFetcherSpec ImageFetcherSpec,
 	processSpec runtime.ProcessSpec,
+	eventDelegate runtime.TaskStartingEventDelegate,
+	taskConfig atc.TaskConfig,
 	lockFactory lock.LockFactory,
 ) TaskResult {
 	err := client.wireInputsAndCaches(logger, &containerSpec)
@@ -246,6 +250,7 @@ func (client *client) RunTaskStep(
 	if err == nil {
 		logger.Info("already-running")
 	} else {
+		eventDelegate.Starting(logger, taskConfig)
 		logger.Info("spawning")
 
 		process, err = container.Run(

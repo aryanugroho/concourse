@@ -393,6 +393,9 @@ var _ = Describe("Client", func() {
 			fakeImageFetcherSpec worker.ImageFetcherSpec
 			fakeTaskProcessSpec  runtime.ProcessSpec
 			fakeContainer        *workerfakes.FakeContainer
+			fakeTaskDelegate	 *execfakes.FakeTaskDelegate
+			someTaskConfig		atc.TaskConfig
+
 			ctx                  context.Context
 			cancel               func()
 		)
@@ -467,6 +470,9 @@ var _ = Describe("Client", func() {
 				return nil
 			}
 
+			fakeTaskDelegate = new(execfakes.FakeTaskDelegate)
+			someTaskConfig = atc.TaskConfig{}
+
 			fakeLockFactory = new(lockfakes.FakeLockFactory)
 			fakeLock = new(lockfakes.FakeLock)
 			fakeLockFactory.AcquireReturns(fakeLock, true, nil)
@@ -486,6 +492,8 @@ var _ = Describe("Client", func() {
 				fakeMetadata,
 				fakeImageFetcherSpec,
 				fakeTaskProcessSpec,
+				fakeTaskDelegate,
+				someTaskConfig,
 				fakeLockFactory,
 			)
 			status = taskResult.Status
@@ -874,6 +882,13 @@ var _ = Describe("Client", func() {
 					Expect(gardenProcessSpec.TTY).To(Equal(&garden.TTYSpec{WindowSize: &garden.WindowSize{Columns: 500, Rows: 500}}))
 					Expect(actualProcessIO.Stdout).To(Equal(stdoutBuf))
 					Expect(actualProcessIO.Stderr).To(Equal(stderrBuf))
+				})
+
+				It("invokes the Starting Event on the delegate", func(){
+					Expect(fakeTaskDelegate.StartingCallCount()).Should((Equal(1)))
+
+					_, actualTaskConfig := fakeTaskDelegate.StartingArgsForCall(0)
+					Expect(actualTaskConfig).To(Equal(someTaskConfig))
 				})
 
 				Context("when the process is interrupted", func() {

@@ -217,6 +217,8 @@ func (step *TaskStep) Run(ctx context.Context, state RunState) error {
 		step.containerMetadata,
 		imageSpec,
 		processSpec,
+		step.delegate,
+		config,
 		step.lockFactory,
 	)
 

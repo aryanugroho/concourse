@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"io"
 
+	"code.cloudfoundry.org/lager"
 	"github.com/concourse/concourse/atc"
 )
 
 const (
-	InitializingEvent          = "Initializing"
-	StartingEvent              = "Starting"
-	FinishedEvent              = "Finished"
 	ResourceResultPropertyName = "concourse:resource-result"
 	ResourceProcessID          = "resource"
 )
+
+type TaskStartingEventDelegate interface {
+	Starting(lager.Logger, atc.TaskConfig)
+}
 
 type VersionResult struct {
 	Version  atc.Version         `json:"version"`
