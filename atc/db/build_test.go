@@ -386,7 +386,7 @@ var _ = Describe("Build", func() {
 				transitionBuildCol         = "transition_build_id"
 			)
 
-			Context("when there is a pending build that is not a rerun", func() {
+			Context("when there is a pending build", func() {
 				BeforeEach(func() {
 					pdBuild, err = job.CreateBuild()
 					Expect(err).NotTo(HaveOccurred())
@@ -454,15 +454,26 @@ var _ = Describe("Build", func() {
 					})
 				})
 
-				Context("when pending build finished and rerunning a non latest build and it finishes", func() {
+				Context("when pending build finished with status changed", func() {
 					BeforeEach(func() {
 						err = pdBuild.Finish(db.BuildStatusErrored)
+						Expect(err).NotTo(HaveOccurred())
+					})
+
+					It("updates transition build id", func() {
+						Expect(getJobBuildID(transitionBuildCol, job.ID())).To(Equal(pdBuild.ID()))
+					})
+				})
+
+				Context("when pending build finished and rerunning a non latest build and it finishes", func() {
+					BeforeEach(func() {
+						err = pdBuild.Finish(db.BuildStatusSucceeded)
 						Expect(err).NotTo(HaveOccurred())
 
 						rrBuild, err = job.RerunBuild(build)
 						Expect(err).NotTo(HaveOccurred())
 
-						err = rrBuild.Finish(db.BuildStatusSucceeded)
+						err = rrBuild.Finish(db.BuildStatusErrored)
 						Expect(err).NotTo(HaveOccurred())
 					})
 
@@ -477,7 +488,7 @@ var _ = Describe("Build", func() {
 					})
 
 					It("does not updates transition build id", func() {
-						Expect(getJobBuildID(transitionBuildCol, job.ID())).To(Equal(pdBuild.ID()))
+						Expect(getJobBuildID(transitionBuildCol, job.ID())).To(Equal(build.ID()))
 					})
 				})
 			})
